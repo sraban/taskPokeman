@@ -69,7 +69,7 @@
             <div class="row mb-2">
                <div class="col-md-12">
                   <div class="d-flex flex-row justify-content-between align-items-center">
-                     <h6 class="mx-3">Showing {{ totalPokeman }} pokeman</h6>
+                     <h6 class="mx-3">Showing {{ totalPokeman }} Results</h6>
                      <div class="mr-3">
                         <table>
                            <tr><td><span class="mr-1">Per Page:</span></td>
@@ -99,12 +99,12 @@
                             <div class="card-pf-body" style="height: 262.969px;">
                               <div class="card-pf-top-element">
                                   <span class="card-pf-icon-circle" @click="detailPokemans(row.id)">
-                                    <img class="rounded-circle" :src="row.sprites.front_default">
-                                    <!-- <img class="rounded-circle" :src="row.sprites.back_default"> -->
-                                    </span>
+                                    <div class="front"><img class="rounded-circle" :src="row.sprites.front_default"></div>
+                                    <div class="back"><img class="rounded-circle" :src="row.sprites.front_shiny"></div>
+                                  </span>
                               </div>
                               <h2 class="card-pf-title text-center">
-                                  {{ row.name }}
+                                  {{ (row.name).toUpperCase() }}
                               </h2>
                               <div class="card-pf-items text-center">
                                   <div class="card-pf-item">
@@ -116,11 +116,8 @@
                                   </div>
                               </div>
                               <p class="card-pf-info text-center"><strong>Abilities:</strong> 
-                                <span v-for="abl of row.abilities" class="badge badge-primary m-1">{{ abl.ability.name }}</span>
+                                <span v-for="(abl,index) in row.abilities" class="badge badge-primary m-1" :key="index+'_'+row.name">{{ abl.ability.name }}</span>
                               </p>
-                            </div>
-                            <div class="card-pf-view-checkbox">
-                              <input type="checkbox">
                             </div>
                         </div>
                       </div>
@@ -177,25 +174,74 @@
           <div class="modal-content">
               <div class="modal-header">
                   <h4 class="modal-title" id="myModalLabel">Detail Pokeman</h4>
-                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Back</button>
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fa fa-arrow-left"></i> Back</button>
               </div>
-              <div class="modal-body" style="height:85vh;overflow:scroll;">
-                  <p>Name: {{ detailPokeman.name }}</p>
-                  <p>Height: {{ detailPokeman.height }}</p>
-                  <p>Weight: {{ detailPokeman.weight }}</p>
-                  <!-- <p>Name: {{ detailPokeman.species.name }}</p>
-                  <p>Pics: {{ detailPokeman.sprites }}</p>
-                  <p>Exp: {{ detailPokeman.base_experience }}</p>
-                  <p>Other: {{ detailPokeman.other }}</p>
-                  <p>Versions: {{ detailPokeman.versions }}</p>
-                  <p>Types: {{ detailPokeman.types }}</p> -->
+              <div class="modal-body p-3" style="height:85vh;overflow:scroll;">
+                  <p><b>Name:</b> {{ (detailPokeman.name) }}</p>
+                  <p><b>Height:</b> {{ detailPokeman.height }}</p>
+                  <p><b>Weight:</b> {{ detailPokeman.weight }}</p>
+                  <hr>
+                  <h5>Images:</h5>
+                  <div class="border d-flex flex-wrap p-2 mb-2 clear-fix">                    
+                    <span class="p-2 m-2 float-left" v-for="(pic,index) in detailPokeman.sprites" :key="index">
+                        <img :src="pic.value" style="max-width:100px;"><br>
+                        {{ pic.key.replace(/_/g, ' ').toUpperCase() }}                    
+                    </span>
+                  </div>
 
-                  <p><strong>Abilities:</strong> 
-                    <span v-for="abl of detailPokeman.abilities" class="badge badge-primary m-1">{{ abl.ability.name }}</span>
+                  <p v-if="detailPokeman.abilities" class="mt-4">
+                    <strong>Abilities:</strong> <br>
+                    <span v-for="(obj,index) in detailPokeman.abilities" :key="index">                      
+                      <span @click="pokeManOtherDetail(obj.value)" v-if="obj.key == 'url'" class="badge badge-primary cursor mx-1 p-1">{{ detailPokeman.abilities[index-1].value }}</span>
+                    </span>
                   </p>
+
+                  <p v-if="detailPokeman.species" class="mt-4">
+                    <strong>Species:</strong> <br>
+                    <span v-for="(obj,index) in detailPokeman.species" :key="index">                      
+                      <span @click="pokeManOtherDetail(obj.value)" v-if="obj.key == 'url'" class="badge badge-info cursor mx-1 p-1">{{ detailPokeman.species[index-1].value }}</span>
+                    </span>
+                  </p>
+
+                  <p v-if="detailPokeman.types" class="mt-4">
+                    <strong>Types:</strong> <br>
+                    <span v-for="(obj,index) in detailPokeman.types" :key="index">
+                      <span @click="pokeManOtherDetail(obj.value)" v-if="obj.key == 'url'" class="badge badge-warning cursor mx-1 p-1">{{ detailPokeman.types[index-1].value }}</span>
+                    </span>
+                  </p>
+
+                  <p v-if="detailPokeman.stats" class="mt-4">
+                    <strong>Stat:</strong> <br>
+                    <span v-for="(obj,index) in detailPokeman.stats" :key="index">                      
+                      <span @click="pokeManOtherDetail(obj.value)" v-if="obj.key == 'url'" class="badge badge-success cursor mx-1 p-1">{{ detailPokeman.stats[index-1].value }}</span>
+                    </span>
+                  </p>
+
+
+                  <p v-if="detailPokeman.moves" class="mt-4">
+                    <strong>Moves:</strong> <br>
+                    <span v-for="(obj,index) in detailPokeman.moves" :key="index">                      
+                      <span @click="pokeManOtherDetail(obj.value)" v-if="obj.key == 'url'" class="badge badge-secondary cursor mx-1 p-1">{{ detailPokeman.moves[index-1].value }}</span>
+                    </span>
+                  </p>
+
+                  <p v-if="detailPokeman.game_indices" class="mt-4">
+                    <strong>Versions:</strong> <br>
+                    <span v-for="(obj,index) in detailPokeman.game_indices" :key="index">                      
+                      <span @click="pokeManOtherDetail(obj.value)" v-if="obj.key == 'url'" class="badge badge-danger cursor mx-1 p-1">{{ detailPokeman.game_indices[index-1].value }}</span>
+                    </span>
+                  </p>
+
+                  <p v-if="detailPokeman.other" class="mt-4">
+                    <strong>Others:</strong> <br>
+                    <span v-for="(obj,index) in detailPokeman.other" :key="index">                      
+                      <span @click="pokeManOtherDetail(obj.value)" v-if="obj.key == 'url'" class="badge badge-dark cursor mx-1 p-1">{{ detailPokeman.other[index-1].value }}</span>
+                    </span>
+                  </p>
+
               </div>
               <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Back</button>
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fa fa-arrow-left"></i> Back</button>
               </div>
           </div>
       </div>
@@ -205,7 +251,6 @@
 </template>
 
 <script lang="js">
-
   export default  {
     name: 'task-pokeman',
     props: [],
@@ -261,27 +306,55 @@
               this.listDetail.push(data);
             }
           });
-          
-          console.log(this.listDetail);
         },
         detailPokemans(id) {
           this.detailPokeman = {};
           const url = 'https://pokeapi.co/api/v2/pokemon/'+id+'/';
           this.$http.get(url).then( (res) => {
+            
+            // eslint-disable-next-line no-unused-vars
+            function iterateValues(obj, nextedList) {
+                for(var k in obj) {
+                    if(obj[k] instanceof Object) {
+                        iterateValues(obj[k], nextedList);
+                    } else {
+                        if(k && obj[k]) nextedList.push({key:k, value: obj[k]});
+                    }
+                }
+                return nextedList.length > 0 ? nextedList : null ;
+            }
+            
             this.detailPokeman =  res.data;
-            $("#detailPok").click();
+            this.detailPokeman.sprites = iterateValues(res.data.sprites, []);
+            this.detailPokeman.moves = iterateValues(res.data.moves, []);
+            this.detailPokeman.stats = iterateValues(res.data.stats, []);
+            this.detailPokeman.species = iterateValues(res.data.species, []);
+            this.detailPokeman.types = iterateValues(res.data.types, []);
+            this.detailPokeman.abilities = iterateValues(res.data.abilities, []);
+            this.detailPokeman.game_indices = iterateValues(res.data.game_indices, []);
+            this.detailPokeman.other = iterateValues(res.data.other, []);
+
+            document.querySelector("#detailPok").click();
           }).catch((err) => {
+            console.log(err);
+          });
+        },
+        pokeManOtherDetail(url) {
+          this.$http.get(url).then( (res) => { 
+              console.log(res.data);
+              alert('data fetched');
+           }).catch((err) => {
             console.log(err);
           });
         },
         changePerpage(){
           this.perPage = event.target.value;
           this.defaultPage = 'https://pokeapi.co/api/v2/pokemon?limit='+this.perPage+'&offset=0';
-          console.log(this.defaultPage);
           this.getPokemanIds(this.defaultPage);
         }
     },
     computed: {
+
     },
     created() {
     this.getPokemanIds();
@@ -447,15 +520,6 @@
   width: 106px;
 }
 
-.card-pf-view .card-pf-view-checkbox {
-  position: absolute;
-  top: 11px;
-  left: 15px;
-}
-
-.card-pf-view .card-pf-view-checkbox input[type="checkbox"] {
-  display: none;
-}
 
 .card-pf-view.card-pf-view-select {
   position: relative;
@@ -465,11 +529,18 @@
   box-shadow: 0 1px 6px rgba(3, 3, 3, 0.35);
 }
 
-.card-pf-view.card-pf-view-single-select {
-  cursor: pointer;
-}
-
 h2.card-pf-title {
   line-height: 1.1;
+}
+
+.front, .back{
+  position:   absolute;  
+  cursor: pointer;
+}
+.back{ display:none; }
+.card-pf:hover .back{ display: block; }
+.card-pf:hover .front{ display: none; }
+.cursor {
+  cursor: pointer;
 }
 </style>
