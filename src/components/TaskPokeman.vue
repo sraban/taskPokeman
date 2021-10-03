@@ -29,14 +29,14 @@
                            <span id="srch-category">Search By</span>
                          </button>
                          <div class="dropdown-menu">
-                           <a class="dropdown-item" href="#">Name</a>
-                           <a class="dropdown-item" href="#">Abilities</a>
+                           <a class="dropdown-item" href="#" @click="changeSearch('name')">Name</a>
+                           <a class="dropdown-item" href="#" @click="changeSearch('ability')">Abilities</a>
                          </div>
                        </div>
                        <input type="hidden" id="txt-category">
-                        <input type="text" id="txt-search" class="form-control" placeholder="Search for...">
+                        <input type="text" id="txt-search" class="form-control" placeholder="Search for..." @keyup="search($event.target.value)" @keydown="search($event.target.value)">
                         <span class="input-group-append">
-                              <button id="btn-search" type="submit" class="btn btn-default">
+                              <button id="btn-search" type="button" class="btn btn-default">
                                   <i class="fa fa-search"></i>
                               </button>
                           </span>
@@ -51,12 +51,12 @@
                            <span id="srch-category">Sort By</span>
                          </button>
                          <div class="dropdown-menu">
-                           <a class="dropdown-item" href="#">Name</a>
-                           <a class="dropdown-item" href="#">Height</a>
-                           <a class="dropdown-item" href="#">Weight</a>
+                           <a class="dropdown-item" href="#" @click="categroySort = 'name'; sort()">Name</a>
+                           <a class="dropdown-item" href="#" @click="categroySort = 'height'; sort()">Height</a>
+                           <a class="dropdown-item" href="#" @click="categroySort = 'weight'; sort()">Weight</a>
                          </div>
                        </div>
-                      <button class="btn btn-link" type="button">
+                      <button class="btn btn-link" type="button" @click="sort()">
                         <i class="fa fa-sort"></i>
                         <i class="fa fa-sort-number-desc" aria-hidden="true"></i>
                       </button>
@@ -69,7 +69,7 @@
             <div class="row mb-2">
                <div class="col-md-12">
                   <div class="d-flex flex-row justify-content-between align-items-center">
-                     <h6 class="mx-3">Showing {{ totalPokeman }} Results</h6>
+                     <h6 class="mx-3">Showing {{ totalPokeman }} Results - [Sorted By: {{ categroySort.toUpperCase() }} - {{ order }}]<i v-if="searchItem.length > 1">, [Search By: {{ categroySearch.toUpperCase() }}- <span class="text-info">{{ searchItem }}</span>]</i> </h6>
                      <div class="mr-3">
                         <table>
                            <tr><td><span class="mr-1">Per Page:</span></td>
@@ -93,8 +93,7 @@
 
                   <div class="container-fluid container-cards-pf">
                   <div class="row row-cards-pf">
-                      
-                      <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3" v-for="row of listDetail" :key="row.name">
+                      <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3" v-for="row of (searchItem.length > 1 ? listSearchDetail : listDetail)" :key="row.name">
                         <div class="card-pf card-pf-view card-pf-view-select card-pf-view-single-select">
                             <div class="card-pf-body" style="height: 262.969px;">
                               <div class="card-pf-top-element">
@@ -121,33 +120,6 @@
                             </div>
                         </div>
                       </div>
-
-                      <!-- static -->
-                      <!-- <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
-                        <div class="card-pf card-pf-view card-pf-view-select card-pf-view-single-select">
-                            <div class="card-pf-body" style="height: 262.969px;">
-                              <div class="card-pf-top-element">
-                                  <span class="card-pf-icon-circle"></span>
-                              </div>
-                              <h2 class="card-pf-title text-center">
-                                  Cake Service
-                              </h2>
-                              <div class="card-pf-items text-center">
-                                  <div class="card-pf-item">
-                                    <span class="pficon pficon-screen"></span>
-                                    <span class="card-pf-item-text">8</span>
-                                  </div>
-                                  <div class="card-pf-item">
-                                    <span class="fa fa-check"></span>
-                                  </div>
-                              </div>
-                              <p class="card-pf-info text-center"><strong>Created On</strong> 2015-03-01 02:00 AM <br> Never Expires</p>
-                            </div>
-                            <div class="card-pf-view-checkbox">
-                              <input type="checkbox">
-                            </div>
-                        </div>
-                      </div> -->
                       
                   </div>
                 </div>
@@ -180,7 +152,7 @@
                   <p><b>Name:</b> {{ (detailPokeman.name) }}</p>
                   <p><b>Height:</b> {{ detailPokeman.height }}</p>
                   <p><b>Weight:</b> {{ detailPokeman.weight }}</p>
-                  <hr>
+                  <br>
                   <h5>Images:</h5>
                   <div class="border d-flex flex-wrap p-2 mb-2 clear-fix">                    
                     <span class="p-2 m-2 float-left" v-for="(pic,index) in detailPokeman.sprites" :key="index">
@@ -264,8 +236,13 @@
         nextPage: '',
         prevPage: '',
         perPage: '10',
+        categroySort: 'name',
+        categroySearch: 'name',
+        order: 'asc',
+        searchItem:'',
         listIds: [],
         listDetail: [],
+        listSearchDetail: [],
         detailPokeman: {}
       }
     },
@@ -301,10 +278,12 @@
                 height: output.height,
                 weight: output.weight,
                 abilities: output.abilities,
+                abilitiesKey: output.abilities.map( row => row.ability.name).join(', '),
                 sprites: output.sprites
               }
               this.listDetail.push(data);
             }
+            this.sort();
           });
         },
         detailPokemans(id) {
@@ -338,6 +317,43 @@
           }).catch((err) => {
             console.log(err);
           });
+        },
+        changeSearch(category) {
+          this.categroySearch = category;
+          let apiUrl = '';
+          this.getPokemanIds( apiUrl );
+        },
+        search(value) {
+          if(value){
+            this.searchItem = value;
+            this.listSearchDetail = this.listDetail.filter( (row) => {
+              let flag;
+              if(this.categroySearch == 'name')
+                flag = row.name.indexOf(value) !== -1;
+              else 
+                flag = row.abilitiesKey.indexOf(value) !== -1;
+              
+              return flag;
+            });
+          } else {
+            this.listSearchDetail = [];
+          }
+        },
+        sort() {
+          this.order = this.order == 'asc' ? 'desc' : 'asc';
+          // eslint-disable-next-line no-unused-vars
+          function customSort(prop, order) {
+            return function(a, b) {
+                if (a[prop] > b[prop]) {    
+                    return order == 'asc' ? 1 : -1;    
+                } else if (a[prop] < b[prop]) {    
+                    return order == 'asc' ? -1 : 1;    
+                }    
+                return 0;    
+            }
+          }
+
+          this.listDetail.sort(customSort(this.categroySort, this.order));
         },
         pokeManOtherDetail(url) {
           this.$http.get(url).then( (res) => { 
