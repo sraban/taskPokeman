@@ -35,8 +35,33 @@ export default {
   name: 'HelloWorld',
   props: {
     msg: String
-  }
-}
+  },
+  methods: {
+    async getData() {
+      try {
+        const response = await this.$http.get(
+          "http://jsonplaceholder.typicode.com/posts"
+        );
+        console.log(response.data);
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    readData() {
+      this.$http.get(
+          "http://jsonplaceholder.typicode.com/posts"
+        ).then( (res) => {
+          console.log(res.data);
+        }).catch((err) => {
+          console.log(err, 'testing');
+        });
+    }
+  },
+  created() {
+    //this.getData();
+    this.readData();
+  },
+};
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
